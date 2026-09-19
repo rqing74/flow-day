@@ -19,6 +19,16 @@ npm run build
 npm run preview
 ```
 
+## Android 安装包
+
+项目使用 Capacitor 8 封装 Android 原生外壳，包名为 `com.flowday.app`，最低支持 Android 7.0（API 24）。准备好 JDK 21 与 Android SDK 36 后运行：
+
+```sh
+npm run android:apk
+```
+
+测试安装包生成在 `android/app/build/outputs/apk/debug/app-debug.apk`。APK 与网页版使用各自独立的本地数据；可在“数据与备份”中导出 JSON，再在手机端预览并恢复。
+
 ## 可以体验什么
 
 - **今天**：按日期查看时间轴，筛选固定/未完成任务，勾选完成、设置精力，查看专注时长和周目标。
