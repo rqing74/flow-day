@@ -92,11 +92,95 @@ export function newTask(fields = {}) {
     ...fields,
   };
 }
-export function createInitialData() {
-  return {version:1,tasks:[],projects:[],energy:{},reviews:{},focusLogs:[],focusSession:null,recurrences:[]};
+export const COURSE_SEED_VERSION = 1;
+const COURSE_TERM_START = "2026-09-14";
+const courseRange = (from, to) =>
+  Array.from({ length: to - from + 1 }, (_, i) => from + i);
+const periodStart = { 1: 480, 3: 600, 6: 840 };
+const periodDuration = {
+  "1-2": 90,
+  "1-4": 200,
+  "3-4": 100,
+  "6-7": 100,
+  "6-8": 150,
+  "6-9": 200,
+};
+const courseRows = [
+  { key: "creative-tue", title: "创新设计思维", weekday: 1, periods: "1-2", weeks: courseRange(1, 16), category: "design" },
+  { key: "creative-mon", title: "创新设计思维", weekday: 0, periods: "6-9", weeks: courseRange(9, 16), category: "design" },
+  { key: "research-mon", title: "用户研究与设计", weekday: 0, periods: "6-9", weeks: courseRange(1, 8), category: "design" },
+  { key: "research-wed", title: "用户研究与设计", weekday: 2, periods: "1-2", weeks: courseRange(1, 8), category: "design" },
+  { key: "research-sat", title: "用户研究与设计", weekday: 5, periods: "1-2", weeks: courseRange(1, 8), category: "design" },
+  { key: "composition-wed", title: "文化构成设计", weekday: 2, periods: "1-2", weeks: courseRange(9, 16), category: "design" },
+  { key: "composition-thu", title: "文化构成设计", weekday: 3, periods: "1-4", weeks: courseRange(9, 16), category: "design" },
+  { key: "materials-thu", title: "材料感知与模型制作（实训）", weekday: 3, periods: "1-4", weeks: courseRange(1, 8), category: "course" },
+  { key: "information-mon", title: "信息传播理论与基础", weekday: 0, periods: "3-4", weeks: courseRange(1, 16), category: "study" },
+  { key: "mao-tue", title: "毛泽东思想和中国特色社会主义理论体系概论", weekday: 1, periods: "3-4", weeks: courseRange(1, 16), category: "study" },
+  { key: "english-fri", title: "大学英语3", weekday: 4, periods: "3-4", weeks: courseRange(1, 16), category: "study" },
+  { key: "strategy-wed", title: "策略3", weekday: 2, periods: "6-7", weeks: [...courseRange(1, 2), ...courseRange(4, 16)], category: "design" },
+  { key: "strategy-sat", title: "策略3", weekday: 5, periods: "6-7", weeks: [...courseRange(1, 2), ...courseRange(4, 16)], category: "design" },
+  { key: "marketing-thu", title: "创业营销策划与战略训练", weekday: 3, periods: "6-8", weeks: courseRange(1, 16), category: "design" },
+];
+function courseTasks() {
+  return courseRows.flatMap((row) =>
+    row.weeks.map((week) => {
+      const date = addDays(COURSE_TERM_START, (week - 1) * 7 + row.weekday);
+      const start = periodStart[Number(row.periods.split("-")[0])];
+      return newTask({
+        title: row.title,
+        category: row.category,
+        priority: 3,
+        duration: periodDuration[row.periods],
+        energy: row.category === "study" ? 3 : 4,
+        kind: "fixed",
+        date,
+        start,
+        notes: `课程表 · ${["周一", "周二", "周三", "周四", "周五", "周六", "周日"][row.weekday]} · 第${row.periods}节 · 第${week}周`,
+        courseKey: row.key,
+        courseWeek: week,
+      });
+    }),
+  );
 }
-export function restoreData(data) {
-  if (data?.demo === true) return createInitialData();
+function courseInboxTasks() {
+  return [
+    ["形势与政策Ⅲ（理论）", "其他课程 · 第5–8周 · 共4周"],
+    ["形势与政策Ⅲ（实践）", "其他课程 · 第5–8周 · 共4周"],
+    ["意大利语翻译赏析", "其他课程 · 第1–16周 · 共16周"],
+    ["毛泽东思想和中国特色社会主义理论体系概论（实践）", "其他课程 · 第1–16周 · 共16周"],
+    ["非遗技艺与传统文化考察（实践2）· 李聚", "实践课程 · 第1周 · 共1周"],
+    ["非遗技艺与传统文化考察（实践2）· 高枚凤", "实践课程 · 第2周 · 共1周"],
+    ["非遗技艺与传统文化考察（实践2）· 陈金金", "实践课程 · 第3周 · 共1周"],
+  ].map(([title, notes]) =>
+    newTask({
+      title,
+      category: "course",
+      priority: 2,
+      duration: 60,
+      energy: 2,
+      kind: "fixed",
+      date: null,
+      start: null,
+      notes,
+      courseKey: "course-footer",
+    }),
+  );
+}
+export function createInitialData(withCourses = false) {
+  return {
+    version: 1,
+    courseSeedVersion: withCourses ? COURSE_SEED_VERSION : 0,
+    tasks: withCourses ? [...courseTasks(), ...courseInboxTasks()] : [],
+    projects: [],
+    energy: {},
+    reviews: {},
+    focusLogs: [],
+    focusSession: null,
+    recurrences: [],
+  };
+}
+export function restoreData(data, withCourses = false) {
+  if (data?.demo === true) return createInitialData(withCourses);
   return expandRecurring(data);
 }
 export function expandRecurring(data, today = dayKey()) {

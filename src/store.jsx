@@ -1,6 +1,14 @@
 import React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { KEY, createInitialData, restoreData, expandRecurring, dayKey, uid } from "./model";
+import {
+  KEY,
+  COURSE_SEED_VERSION,
+  createInitialData,
+  restoreData,
+  expandRecurring,
+  dayKey,
+  uid,
+} from "./model";
 const Context = createContext(null);
 function load() {
   try {
@@ -15,11 +23,21 @@ function load() {
     ) {
       if (s.demo === true) {
         localStorage.setItem('flowday.backup-before-reset.v1', JSON.stringify(s));
+        return createInitialData(true);
       }
-      return restoreData(s);
+      const restored = restoreData(s);
+      if (s.courseSeedVersion !== COURSE_SEED_VERSION) {
+        const seed = createInitialData(true);
+        return {
+          ...restored,
+          courseSeedVersion: COURSE_SEED_VERSION,
+          tasks: [...restored.tasks, ...seed.tasks],
+        };
+      }
+      return restored;
     }
   } catch {}
-  return createInitialData();
+  return createInitialData(true);
 }
 export function Provider({ children }) {
   const [data, setData] = useState(load),
