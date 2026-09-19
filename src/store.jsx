@@ -13,6 +13,13 @@ function load() {
       s.reviews &&
       Array.isArray(s.focusLogs)
     ) {
+      if (s.courseSeedVersion === 1) {
+        localStorage.setItem(
+          "flowday.backup-before-course-reset.v1",
+          JSON.stringify(s),
+        );
+        return createInitialData();
+      }
       if (s.demo === true) {
         localStorage.setItem('flowday.backup-before-reset.v1', JSON.stringify(s));
       }
