@@ -2851,3 +2851,26 @@ main {
     visibility: visible;
   }
 }
+.topbar > .workspace-actions > .icon-button { display: inline-flex; }
+.workspace-actions { gap: 6px; }
+.backup-manager { display: grid; gap: 20px; }
+.backup-manager section { padding-bottom: 18px; border-bottom: 1px solid #e8eae6; }
+.backup-manager h3 { margin-bottom: 10px; }
+.backup-manager p { line-height: 1.7; margin: 10px 0; }
+.backup-counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+.backup-counts span { display: grid; gap: 4px; padding: 12px 8px; background: #f3f5f1; border-radius: 12px; text-align: center; font-size: 12px; }
+.backup-counts strong { font-size: 22px; font-weight: 600; }
+.backup-file { display: grid; gap: 10px; margin: 14px 0; }
+.backup-file span { display: flex; align-items: center; gap: 8px; }
+.backup-file input { width: 100%; min-width: 0; }
+.backup-preview { margin-top: 18px; padding: 16px; border: 1px solid #cdd9d1; border-radius: 14px; background: #f7f9f5; }
+.backup-filename { overflow-wrap: anywhere; }
+.backup-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.backup-actions input { flex: 1; min-width: 120px; width: 100%; }
+.button.danger { color: #9e443b; border-color: #d9b7b0; }
+@media (max-width: 600px) {
+  .topbar > .workspace-actions { gap: 2px; }
+  .workspace-actions .button { padding: 8px; font-size: 12px; }
+  .workspace-actions .button svg { display: none; }
+  .backup-counts { grid-template-columns: repeat(2, 1fr); }
+}

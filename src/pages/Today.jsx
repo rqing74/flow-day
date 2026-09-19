@@ -279,7 +279,7 @@ export default function Today({
           {!data.projects.length && <p className="muted">还没有目标，慢慢开始。</p>}
           {data.projects.map((p, i) => {
             const g = goalStats(data, p.id, date),
-              Icon = [GraduationCap, Monitor, Dumbbell][i];
+              Icon = [GraduationCap, Monitor, Dumbbell][i % 3];
             return (
               <button
                 key={p.id}
@@ -290,9 +290,9 @@ export default function Today({
                 <div>
                   <div>
                     <strong>{p.title}</strong>
-                    <small>{Math.round((g.weekly / p.weekly) * 100)}%</small>
+                    <small>{p.weekly ? Math.round((g.weekly / p.weekly) * 100) : 0}%</small>
                   </div>
-                  <Progress value={Math.round((g.weekly / p.weekly) * 100)} />
+                  <Progress value={p.weekly ? Math.round((g.weekly / p.weekly) * 100) : 0} />
                   <span>
                     本周完成 {duration(g.weekly)} / {duration(p.weekly)}
                   </span>

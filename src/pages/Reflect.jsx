@@ -40,7 +40,7 @@ export function Goals({ onSelect, navigate }) {
       <div className="goal-cards">
         {data.projects.map((p, i) => {
           const g = goalStats(data, p.id),
-            Icon = [GraduationCap, Monitor, Dumbbell][i];
+            Icon = [GraduationCap, Monitor, Dumbbell][i % 3];
           return (
             <button
               key={p.id}

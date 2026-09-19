@@ -12,6 +12,9 @@ import {
   ChevronRight,
   Menu,
   Pause,
+  Undo2,
+  Redo2,
+  Database,
 } from "lucide-react";
 import { useFlow } from "./store";
 import { conflicts, validTask, expandRecurring } from "./model";
@@ -27,6 +30,7 @@ import Today from "./pages/Today";
 import Calendar from "./pages/Calendar";
 import Tasks from "./pages/Tasks";
 import { Goals, Review, Insights } from "./pages/Reflect";
+import DataManager from "./DataManager";
 const nav = [
   ["today", "今天", Home],
   ["calendar", "日历", CalendarDays],
@@ -36,7 +40,7 @@ const nav = [
   ["insights", "洞察", ChartNoAxesColumn],
 ];
 export default function App() {
-  const { data, setData, toast, stopFocus } = useFlow();
+  const { data, setData, toast, stopFocus, undo, redo, canUndo, canRedo, revision } = useFlow();
   const [page, setPage] = useState(() => location.hash.slice(2) || "today"),
     [mobile, setMobile] = useState(false),
     [modal, setModal] = useState(null),
@@ -169,12 +173,17 @@ export default function App() {
             <ChevronRight size={14} />
             <small>你的每一天，都有可能</small>
           </div>
+          <div className="workspace-actions">
+            <IconButton label="撤销上一步" disabled={!canUndo} onClick={undo}><Undo2 size={17} /></IconButton>
+            <IconButton label="重做上一步" disabled={!canRedo} onClick={redo}><Redo2 size={17} /></IconButton>
+            <IconButton label="数据与备份" onClick={() => setModal("data")}><Database size={17} /></IconButton>
           <button className="button primary" onClick={() => setModal("quick")}>
             <Plus size={17} />
             快速添加
           </button>
+          </div>
         </header>
-        <main>
+        <main key={revision}>
           {page === "calendar" ? (
             <Calendar {...common} />
           ) : page === "tasks" ? (
@@ -233,6 +242,7 @@ export default function App() {
       )}
       {modal === "planner" && <Planner onClose={() => setModal(null)} />}
       {modal === "available" && <Available onClose={() => setModal(null)} />}
+      {modal === "data" && <DataManager onClose={() => setModal(null)} />}
       {conflict && (
         <ConflictDialog
           candidate={conflict}

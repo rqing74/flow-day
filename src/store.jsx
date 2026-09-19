@@ -1,6 +1,7 @@
 import React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useReducer } from "react";
 import { KEY, createInitialData, restoreData, expandRecurring, dayKey, uid } from "./model";
+import { historyReducer, replaceWithRecovery } from "./backup";
 const Context = createContext(null);
 function load() {
   try {
@@ -29,9 +30,22 @@ function load() {
   return createInitialData();
 }
 export function Provider({ children }) {
-  const [data, setData] = useState(load),
-    [toast, setToast] = useState(""),
+  const [history, dispatch] = useReducer(historyReducer, null, () => ({
+    data: load(), past: [], future: [], revision: 0,
+  }));
+  const { data, revision } = history;
+  const setData = (update) => dispatch({ type: "change", update });
+  const [toast, setToast] = useState(""),
     [storageError, setStorageError] = useState(false);
+  const replaceData = (next) => {
+    if (data.focusSession) throw new Error("请先结束当前专注，再恢复或清空数据。");
+    try {
+      replaceWithRecovery(localStorage, data, next, KEY);
+    } catch {
+      throw new Error("无法保存恢复快照，已停止操作。请先导出备份并检查浏览器存储空间。");
+    }
+    dispatch({ type: "change", update: next, replace: true });
+  };
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
@@ -107,6 +121,12 @@ export function Provider({ children }) {
     <Context.Provider
       value={{
         data,
+        revision,
+        canUndo: history.past.length > 0 && !data.focusSession,
+        canRedo: history.future.length > 0 && !data.focusSession,
+        undo: () => dispatch({ type: "undo" }),
+        redo: () => dispatch({ type: "redo" }),
+        replaceData,
         setData,
         updateTask,
         complete,
