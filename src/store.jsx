@@ -1,6 +1,6 @@
 import React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { KEY, seed, expandRecurring, dayKey, uid } from "./model";
+import { KEY, createInitialData, restoreData, expandRecurring, dayKey, uid } from "./model";
 const Context = createContext(null);
 function load() {
   try {
@@ -12,10 +12,14 @@ function load() {
       s.energy &&
       s.reviews &&
       Array.isArray(s.focusLogs)
-    )
-      return expandRecurring(s);
+    ) {
+      if (s.demo === true) {
+        localStorage.setItem('flowday.backup-before-reset.v1', JSON.stringify(s));
+      }
+      return restoreData(s);
+    }
   } catch {}
-  return seed();
+  return createInitialData();
 }
 export function Provider({ children }) {
   const [data, setData] = useState(load),

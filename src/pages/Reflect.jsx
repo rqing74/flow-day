@@ -20,11 +20,12 @@ import {
   stats,
   streak,
 } from "../model";
-import { PageHeading, Progress, SectionTitle } from "../components";
+import { PageHeading, Progress, SectionTitle, Empty } from "../components";
 
 export function Goals({ onSelect, navigate }) {
   const { data } = useFlow();
-  const [selected, setSelected] = useState(data.projects[0].id);
+  const [selected, setSelected] = useState(data.projects[0]?.id);
+  if (!data.projects.length) return <><PageHeading title="把日常，走成远方。" subtitle="目标不必遥远。让今天的小事，连接你在意的方向。"/><section className="panel"><Empty>还没有目标，从你在意的方向开始。</Empty></section></>;
   const p = data.projects.find((p) => p.id === selected),
     g = goalStats(data, p.id);
   const linked = data.tasks.filter(
@@ -192,7 +193,7 @@ export function Review() {
             s.rate + "%",
             `${s.done.length} / ${s.tasks.length} 项任务`,
           ],
-          ["专注时长", duration(s.focus), "专注计时与演示记录"],
+          ["专注时长", duration(s.focus), "来自你的专注计时"],
         ].map(([l, v, h]) => (
           <div className="panel metric" key={l}>
             <span>{l}</span>
@@ -571,15 +572,15 @@ export function Insights() {
         <div>
           <h3>关于你的节奏，我们发现…</h3>
           <p>
-            这 {range} 天里，你完成了 {rate}% 的计划。
+            {allTasks.length ? `这 ${range} 天里，你完成了 ${rate}% 的计划。` : '还没有任务记录，从第一个小计划开始。'}
             {totalFocus
               ? `${dates[peak].slice(5)} 是最专注的一天，投入了 ${duration(daily[peak].focus)}。`
               : "还没有专注记录，可以从一次短暂的专注开始。"}
-            {rate < 75
+            {allTasks.length > 0 && (rate < 75
               ? "下一周可以减少一点计划量，把空白也留进日程。"
-              : "继续保持这个节奏，也记得给自己一点休息。"}
+              : "继续保持这个节奏，也记得给自己一点休息。")}
           </p>
-          <small>根据本地记录自动生成 · 当前包含演示数据</small>
+          <small>根据你的本地记录生成</small>
         </div>
       </section>
     </>

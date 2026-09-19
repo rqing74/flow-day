@@ -9,7 +9,8 @@ import {
   replan,
   findSlot,
   recommend,
-  seed,
+  createInitialData,
+  restoreData,
   expandRecurring,
   goalStats,
   stats,
@@ -231,10 +232,22 @@ test("task validation rejects empty title, nonfinite and cross-midnight blocks",
     false,
   );
 });
-test("seed data has six today events and consistent persisted shapes", () => {
-  const d = seed(date);
-  assert.equal(d.tasks.filter((t) => t.date === date).length, 6);
-  assert.equal(stats(d, date).rate, 33);
-  assert.equal(stats(d, date).focus, 45);
-  assert.ok(d.tasks.every(validTask));
+test("initial state contains no demonstration records", () => {
+  const d = createInitialData();
+  assert.equal(d.tasks.length, 0);
+  assert.equal(d.projects.length, 0);
+  assert.deepEqual(d.energy, {});
+  assert.deepEqual(d.reviews, {});
+  assert.equal(stats(d, date).focus, 0);
+  assert.equal(d.recurrences.length, 0);
+});
+test("legacy demo resets once and cannot regenerate recurring tasks", () => {
+  const previous={...createInitialData(),demo:true,tasks:[newTask({date,start:600,repeat:'daily',seriesId:'old'})],focusLogs:[{date,minutes:45}]};
+  const clean=restoreData(previous);
+  assert.deepEqual(clean,createInitialData());
+  assert.deepEqual(restoreData(clean),clean);
+});
+test("new user records survive later reloads", () => {
+  const user={...createInitialData(),tasks:[newTask({title:'我的第一项任务'})]};
+  assert.deepEqual(restoreData(user),user);
 });

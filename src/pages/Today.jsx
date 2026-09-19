@@ -44,7 +44,7 @@ export default function Today({
     [filter, setFilter] = useState("all");
   const s = stats(data, date);
   const start = monday(date),
-    energy = data.energy[date] || 3;
+    energy = data.energy[date] || 0;
   const list = s.tasks
     .filter(
       (t) =>
@@ -231,7 +231,7 @@ export default function Today({
                 ))}
               </div>
               <small>
-                {energy >= 4
+                {energy === 0 ? '尚未记录今日精力' : energy >= 4
                   ? "状态不错，继续保持！"
                   : energy <= 2
                     ? "放慢一点，也没关系。"
@@ -276,6 +276,7 @@ export default function Today({
           >
             本周目标
           </SectionTitle>
+          {!data.projects.length && <p className="muted">还没有目标，慢慢开始。</p>}
           {data.projects.map((p, i) => {
             const g = goalStats(data, p.id, date),
               Icon = [GraduationCap, Monitor, Dumbbell][i];
@@ -302,7 +303,7 @@ export default function Today({
         </section>
         <p className="local-note">
           <span />
-          已自动保存在此浏览器 · 含演示数据
+          已自动保存在此浏览器
         </p>
       </aside>
     </div>

@@ -575,7 +575,7 @@ export function Planner({ onClose }) {
   return (
     <Modal
       title="给计划一点弹性"
-      subtitle="AI 重新安排 · 本地演示算法，无需联网"
+      subtitle="AI 重新安排 · 本地规则规划，无需联网"
       onClose={onClose}
     >
       <label>
@@ -639,7 +639,7 @@ export function Available({ onClose }) {
   return (
     <Modal
       title="这段空闲，刚好做点喜欢的"
-      subtitle={`当前精力 ${energy}/5 · 根据时长、优先级和截止日期推荐`}
+      subtitle={`${data.energy[dayKey()] ? `当前精力 ${energy}/5` : '精力未记录，暂按中等精力推荐'} · 根据时长、优先级和截止日期推荐`}
       onClose={onClose}
     >
       <label>
