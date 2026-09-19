@@ -251,19 +251,3 @@ test("new user records survive later reloads", () => {
   const user={...createInitialData(),tasks:[newTask({title:'我的第一项任务'})]};
   assert.deepEqual(restoreData(user),user);
 });
-test("course seed materializes the first semester timetable", () => {
-  const seeded = createInitialData(true);
-  assert.equal(seeded.courseSeedVersion, 1);
-  assert.ok(seeded.tasks.length > 100);
-  assert.ok(
-    seeded.tasks.some(
-      (t) => t.date === "2026-09-14" && t.title === "信息传播理论与基础",
-    ),
-  );
-  assert.ok(
-    seeded.tasks.some(
-      (t) => t.date === "2026-09-19" && t.title === "用户研究与设计",
-    ),
-  );
-  assert.ok(seeded.tasks.some((t) => !t.date && t.title === "意大利语翻译赏析"));
-});
