@@ -21,21 +21,27 @@ import {
   streak,
 } from "../model";
 import { PageHeading, Progress, SectionTitle, Empty } from "../components";
+import GoalEditor from "../GoalEditor";
 
 export function Goals({ onSelect, navigate }) {
   const { data } = useFlow();
   const [selected, setSelected] = useState(data.projects[0]?.id);
-  if (!data.projects.length) return <><PageHeading title="把日常，走成远方。" subtitle="目标不必遥远。让今天的小事，连接你在意的方向。"/><section className="panel"><Empty>还没有目标，从你在意的方向开始。</Empty></section></>;
-  const p = data.projects.find((p) => p.id === selected),
+  const [editing, setEditing] = useState(null);
+  const editor = editing && <GoalEditor project={editing === "new" ? null : editing}
+    onClose={() => setEditing(null)} onSaved={(id) => { setSelected(id); setEditing(null); }} />;
+  const createButton = <button className="button primary" onClick={() => setEditing("new")}>创建目标</button>;
+  if (!data.projects.length) return <><PageHeading title="把日常，走成远方。" subtitle="目标不必遥远。让今天的小事，连接你在意的方向。" action={createButton}/><section className="panel"><Empty>还没有目标，从你在意的方向开始。</Empty></section>{editor}</>;
+  const p = data.projects.find((p) => p.id === selected) || data.projects[0],
     g = goalStats(data, p.id);
   const linked = data.tasks.filter(
-    (t) => t.projectId === selected && (!t.date || t.date <= dayKey()),
+    (t) => t.projectId === p.id && (!t.date || t.date <= dayKey()),
   );
   return (
     <>
       <PageHeading
         title="把日常，走成远方。"
         subtitle="目标不必遥远。让今天的小事，连接你在意的方向。"
+        action={createButton}
       />
       <div className="goal-cards">
         {data.projects.map((p, i) => {
@@ -77,22 +83,22 @@ export function Goals({ onSelect, navigate }) {
       </div>
       <div className="two-columns goal-bottom">
         <section className="panel">
-          <SectionTitle>{p.title} · 里程碑</SectionTitle>
+          <SectionTitle action={<button className="text-button" onClick={() => setEditing(p)}>编辑目标</button>}>{p.title} · 里程碑</SectionTitle>
           <p className="muted">按关联任务完成比例，自动跟踪阶段进展。</p>
           <div className="milestones">
             {p.milestones.map((m, i) => (
-              <div key={m}>
+              <div key={i}>
                 <span
-                  className={g.rate >= ((i + 1) / 3) * 100 ? "achieved" : ""}
+                  className={g.rate >= ((i + 1) / p.milestones.length) * 100 ? "achieved" : ""}
                 >
-                  {g.rate >= ((i + 1) / 3) * 100 ? <Check size={18} /> : i + 1}
+                  {g.rate >= ((i + 1) / p.milestones.length) * 100 ? <Check size={18} /> : i + 1}
                 </span>
                 <div>
                   <strong>{m}</strong>
                   <small>
-                    {g.rate >= ((i + 1) / 3) * 100
+                    {g.rate >= ((i + 1) / p.milestones.length) * 100
                       ? "已达成"
-                      : `完成 ${Math.round(((i + 1) / 3) * 100)}% 的项目任务后达成`}
+                      : `完成 ${Math.round(((i + 1) / p.milestones.length) * 100)}% 的项目任务后达成`}
                   </small>
                 </div>
               </div>
@@ -102,7 +108,7 @@ export function Goals({ onSelect, navigate }) {
             <Flag size={18} />
             下一步：
             {linked.find((t) => !t.done)?.title ||
-              "已完成当前任务，给自己一点鼓励。"}
+              (linked.length ? "已完成当前任务，给自己一点鼓励。" : "去任务页关联第一项任务。")}
           </div>
         </section>
         <section className="panel">
@@ -135,9 +141,10 @@ export function Goals({ onSelect, navigate }) {
                 </button>
               ))}
           </div>
-          <p className="muted">完成任务后，目标进度会自动更新。</p>
+          <p className="muted">在任务页关联目标后，完成任务会自动更新进度。进度统计截至今天的任务和 Inbox 任务。</p>
         </section>
       </div>
+      {editor}
     </>
   );
 }

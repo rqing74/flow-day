@@ -126,7 +126,8 @@ export function expandRecurring(data, today = dayKey()) {
   for (const [id, t] of templates)
     for (let i = 0; i < 30; i++) {
       const date = addDays(today, i);
-      if (date < t.date || seen.has(id + "|" + date)) continue;
+      if (date < t.date || (t.endBefore && date >= t.endBefore) ||
+          (t.excludedDates || []).includes(date) || seen.has(id + "|" + date)) continue;
       let next = {
         ...t,
         id: uid(),
@@ -163,6 +164,72 @@ export function conflicts(task, tasks) {
       t.start < task.start + task.duration &&
       task.start < t.start + t.duration,
   );
+}
+export function validProject(p) {
+  return typeof p.title === "string" && p.title.trim().length > 0 &&
+    Object.hasOwn(categories, p.category) && typeof p.goal === "string" &&
+    Number.isInteger(p.weekly) && p.weekly > 0 && p.weekly <= 10080 &&
+    Array.isArray(p.milestones) && p.milestones.length > 0 && p.milestones.length <= 12 &&
+    p.milestones.every((m) => typeof m === "string" && m.trim());
+}
+
+export function deletionTargets(data, ids, scope = "selected") {
+  const selected = data.tasks.filter((t) => ids.includes(t.id));
+  const cutoffs = new Map();
+  if (scope === "following") {
+    for (const t of selected) {
+      const date = t.occurrenceDate || t.date;
+      if (t.seriesId && date && (!cutoffs.has(t.seriesId) || date < cutoffs.get(t.seriesId)))
+        cutoffs.set(t.seriesId, date);
+    }
+  }
+  return data.tasks.filter((t) => ids.includes(t.id) ||
+    (cutoffs.has(t.seriesId) && (t.occurrenceDate || t.date) >= cutoffs.get(t.seriesId)));
+}
+
+export function deleteTasks(data, ids, scope = "selected") {
+  const removed = deletionTargets(data, ids, scope);
+  if (removed.some((t) => t.id === data.focusSession?.taskId))
+    throw new Error("所选任务正在专注，请先结束计时再删除。");
+  const templates = new Map((data.recurrences || []).map((t) => [t.seriesId, t]));
+  // Preserve templates even when deleting the first or all generated occurrences.
+  for (const t of data.tasks)
+    if (t.repeat === "daily" && t.seriesId && t.date && t.start !== null && !templates.has(t.seriesId))
+      templates.set(t.seriesId, t);
+  for (const t of removed) {
+    const template = templates.get(t.seriesId), date = t.occurrenceDate || t.date;
+    if (!template || !date) continue;
+    templates.set(t.seriesId, scope === "following" ? {
+      ...template, endBefore: template.endBefore && template.endBefore < date ? template.endBefore : date,
+    } : {
+      ...template, excludedDates: [...new Set([...(template.excludedDates || []), date])],
+    });
+  }
+  const removedIds = new Set(removed.map((t) => t.id));
+  return { ...data, tasks: data.tasks.filter((t) => !removedIds.has(t.id)), recurrences: [...templates.values()] };
+}
+
+export function planBatchMove(data, ids, date) {
+  const moving = data.tasks.filter((t) => ids.includes(t.id));
+  if (!moving.length) throw new Error("请先选择任务。");
+  if (!validTask({ title: "日期校验", duration: 30, date, start: 540 }) || !date)
+    throw new Error("请选择有效的目标日期。");
+  if (moving.some((t) => t.kind === "fixed" || t.done || t.id === data.focusSession?.taskId))
+    throw new Error("固定、已完成或正在专注的任务不能批量改期，请取消选择这些任务。");
+  const occupied = data.tasks.filter((t) => !ids.includes(t.id));
+  const changes = [];
+  // Keep scheduled times; place Inbox tasks only after those times are reserved.
+  for (const t of [...moving].sort((a, b) => Number(!a.date) - Number(!b.date))) {
+    if (t.deadline && date > t.deadline) throw new Error(`“${t.title}”会超过截止日期，未修改任何任务。`);
+    const slot = t.date ? { date, start: t.start } : findSlot(t, occupied, date, 540);
+    if (!slot) throw new Error(`“${t.title}”当天没有足够空闲时间，未修改任何任务。`);
+    const after = { ...t, ...slot, ...(t.seriesId ? { occurrenceDate: t.occurrenceDate || t.date } : {}) };
+    const overlap = conflicts(after, occupied);
+    if (overlap.length) throw new Error(`“${t.title}”与“${overlap[0].title}”时间冲突，未修改任何任务。`);
+    occupied.push(after);
+    changes.push({ before: t, after });
+  }
+  return changes;
 }
 export function validTask(t) {
   return (

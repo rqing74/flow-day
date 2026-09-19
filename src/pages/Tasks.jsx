@@ -13,12 +13,16 @@ import { useFlow } from "../store";
 import { categories, duration, dayKey } from "../model";
 import { PageHeading, Empty } from "../components";
 import { TaskEditor } from "../dialogs";
+import BatchTasks from "../BatchTasks";
 export default function Tasks({ onSave, onQuick }) {
   const { data, complete } = useFlow();
   const [tab, setTab] = useState("inbox"),
     [query, setQuery] = useState(""),
     [selected, setSelected] = useState(null),
     [category, setCategory] = useState("all");
+  const [batch, setBatch] = useState(false);
+  const [checked, setChecked] = useState([]);
+  const [action, setAction] = useState(null);
   const groups = {
     inbox: data.tasks.filter((t) => !t.done && !t.date),
     planned: data.tasks.filter((t) => !t.done && t.date),
@@ -35,6 +39,7 @@ export default function Tasks({ onSave, onQuick }) {
         b.priority - a.priority || (a.date || "").localeCompare(b.date || ""),
     );
   const active = data.tasks.find((t) => t.id === selected);
+  const picked = checked.filter((id) => list.some((t) => t.id === id));
   return (
     <>
       <PageHeading
@@ -58,7 +63,7 @@ export default function Tasks({ onSave, onQuick }) {
               <button
                 key={k}
                 className={tab === k ? "active" : ""}
-                onClick={() => setTab(k)}
+                onClick={() => { setTab(k); setChecked([]); }}
               >
                 <Icon size={16} />
                 {label}
@@ -73,13 +78,13 @@ export default function Tasks({ onSave, onQuick }) {
                 aria-label="搜索任务"
                 placeholder="搜索任务…"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => { setQuery(e.target.value); setChecked([]); }}
               />
             </div>
             <select
               aria-label="分类筛选"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => { setCategory(e.target.value); setChecked([]); }}
             >
               <option value="all">全部分类</option>
               {Object.entries(categories).map(([k, v]) => (
@@ -88,6 +93,16 @@ export default function Tasks({ onSave, onQuick }) {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="batch-toolbar">
+            <button className="button small" onClick={() => { setBatch(!batch); setChecked([]); }}>{batch ? "退出多选" : "批量管理"}</button>
+            {batch && <>
+              <label><input type="checkbox" aria-label="全选当前列表" checked={list.length > 0 && picked.length === list.length} disabled={!list.length} onChange={(e) => setChecked(e.target.checked ? list.map((t) => t.id) : [])} />全选当前列表</label>
+              <span>已选 {picked.length} 项</span>
+              <button className="button small" disabled={!picked.length} onClick={() => setAction("move")}>批量改期</button>
+              <button className="button small" disabled={!picked.length} onClick={() => setAction("project")}>关联目标</button>
+              <button className="button small danger" disabled={!picked.length} onClick={() => setAction("delete")}>删除所选</button>
+            </>}
           </div>
           <div className="list-label">
             <span>
@@ -105,13 +120,13 @@ export default function Tasks({ onSave, onQuick }) {
                 key={t.id}
                 className={`task-row ${t.id === selected ? "selected" : ""}`}
               >
-                <button
+                {batch ? <input type="checkbox" className="batch-check" aria-label={`选择 ${t.title} ${t.date || "Inbox"}`} checked={picked.includes(t.id)} onChange={(e) => setChecked((old) => e.target.checked ? [...old, t.id] : old.filter((id) => id !== t.id))} /> : <button
                   className={`check ${t.done ? "checked" : ""}`}
                   aria-label={`${t.done ? "取消完成" : "完成"} ${t.title}`}
                   onClick={() => complete(t.id)}
                 >
                   {t.done && <Check size={13} />}
-                </button>
+                </button>}
                 <button
                   className="task-row-content"
                   onClick={() => setSelected(t.id)}
@@ -178,6 +193,7 @@ export default function Tasks({ onSave, onQuick }) {
           )}
         </aside>
       </div>
+      {action && <BatchTasks ids={picked} action={action} onClose={() => setAction(null)} onDone={() => { setAction(null); setChecked([]); setBatch(false); setSelected(null); }} />}
     </>
   );
 }

@@ -2874,3 +2874,13 @@ main {
   .workspace-actions .button svg { display: none; }
   .backup-counts { grid-template-columns: repeat(2, 1fr); }
 }
+.batch-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+.batch-toolbar label { display: flex; flex-direction: row; align-items: center; gap: 6px; margin: 0; }
+.batch-toolbar input, .task-row .batch-check { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); }
+.batch-dialog { display: grid; gap: 14px; }
+.batch-dialog label { display: grid; gap: 8px; }
+.batch-preview { list-style: none; padding: 0; margin: 0; max-height: 260px; overflow-y: auto; }
+.batch-preview li { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.batch-preview span { color: var(--muted); font-size: 12px; }
+.batch-dialog .modal-footer { flex-wrap: wrap; gap: 8px; }
+.goal-card h2, .goal-card p, .mini-goal strong { overflow-wrap: anywhere; }

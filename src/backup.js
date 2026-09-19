@@ -19,6 +19,8 @@ const task = (t) => object(t) && text(t.id) && t.id.length > 0 &&
   ["none", "daily"].includes(t.repeat) &&
   (t.seriesId === undefined || text(t.seriesId)) &&
   (t.occurrenceDate === undefined || date(t.occurrenceDate)) &&
+  (t.endBefore === undefined || date(t.endBefore)) &&
+  (t.excludedDates === undefined || (Array.isArray(t.excludedDates) && t.excludedDates.every(date))) &&
   Array.isArray(t.tags) && t.tags.every(text) && Array.isArray(t.checklist) &&
   t.checklist.every((c) => object(c) && text(c.id) && text(c.text) && typeof c.done === "boolean") && unique(t.checklist);
 
